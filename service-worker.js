@@ -1,7 +1,6 @@
-const CACHE_NAME = 'spl-cache-v1.0.2'; // 升級版本號
+const CACHE_NAME = 'spl-cache-v1.0.3'; // 版本號升級，強制更新快取
 const urlsToCache = [
-  // 移除 './'，因為非 index.html 的專案在抓取根目錄時會導致 404 錯誤，進而讓 SW 安裝失敗
-  './sports-probability-lab-v1.0.html', 
+  './index.html', // 修正：只快取標準的 index.html
   './icon-192.png',
   './icon-512.png',
   './manifest.json',
@@ -15,7 +14,7 @@ self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => {
-        // 這裡會依序抓取清單中的檔案，只要有一個失敗(404)，整個 SW 就會停止運作
+        // 抓取 index.html，確保離線可用
         return cache.addAll(urlsToCache).catch(err => console.log('Cache addAll error:', err));
       })
   );
@@ -28,6 +27,7 @@ self.addEventListener('activate', (event) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
           if (cacheName !== CACHE_NAME) {
+            console.log('Deleting old cache:', cacheName);
             return caches.delete(cacheName);
           }
         })
@@ -40,7 +40,8 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const requestUrl = new URL(event.request.url);
 
-  // 針對主程式 HTML 採用 Network First (優先讀取網路新版)
+  // 導航請求 (Navigation) 或 HTML 請求：Network First
+  // 這樣確保使用者重新整理時一定會先去抓最新的 index.html
   if (event.request.mode === 'navigate' || requestUrl.pathname.endsWith('.html')) {
     event.respondWith(
       fetch(event.request)
@@ -51,10 +52,10 @@ self.addEventListener('fetch', (event) => {
           });
           return response;
         })
-        .catch(() => caches.match(event.request))
+        .catch(() => caches.match('./index.html')) // 若離線，回傳快取的 index.html
     );
   } else {
-    // 其他資源 (圖示、CDN) 採用 Cache First
+    // 其他資源 (JS, CSS, Images)：Cache First
     event.respondWith(
       caches.match(event.request)
         .then((response) => {

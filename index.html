@@ -54,12 +54,6 @@
         /* Animations */
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
         .animate-in { animation: fadeIn 0.3s ease-out forwards; }
-        
-        /* Modal Transitions */
-        .modal-enter { transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
-        .modal-enter-active { transform: translateY(0); }
-        .modal-exit { transform: translateY(0); transition: transform 0.3s ease-in; }
-        .modal-exit-active { transform: translateY(100%); }
     </style>
 </head>
 <body>
@@ -140,8 +134,8 @@
         // --- 4. Main App Component ---
         function App() {
             // --- State: Navigation ---
-            const [activeTab, setActiveTab] = useState('events'); // events, library, backup
-            const [viewState, setViewState] = useState('list'); // list, calculator
+            const [activeTab, setActiveTab] = useState('events'); 
+            const [viewState, setViewState] = useState('list'); 
 
             // --- State: Data (localStorage mirrors) ---
             const [leagues, setLeagues] = useState([]);
@@ -185,7 +179,6 @@
                     createdAt: Date.now()
                 };
                 setEvents([newEvent, ...events]);
-                // Automatically go to calculator? No, stay on list as per spec "Save back to list"
             };
 
             const openCalculator = (event) => {
@@ -207,12 +200,11 @@
                 const [market, setMarket] = useState(event.lastCalc?.market || 'moneyline');
                 const [format, setFormat] = useState(event.lastCalc?.oddsFormat || 'american');
                 const [odds, setOdds] = useState(event.lastCalc?.odds || '');
-                const [line, setLine] = useState(event.lastCalc?.line || ''); // Spread/Total
-                const [probWin, setProbWin] = useState(event.lastCalc?.probWin ? event.lastCalc.probWin * 100 : ''); // Input as 0-100, store as 0-1
+                const [line, setLine] = useState(event.lastCalc?.line || ''); 
+                const [probWin, setProbWin] = useState(event.lastCalc?.probWin ? event.lastCalc.probWin * 100 : ''); 
                 const [probPush, setProbPush] = useState(event.lastCalc?.probPush ? event.lastCalc.probPush * 100 : 0);
                 const [stake, setStake] = useState(event.lastCalc?.stake || '');
 
-                // Live Calculation
                 const numOdds = parseFloat(odds);
                 const numProbWin = parseFloat(probWin) / 100 || 0;
                 const numProbPush = parseFloat(probPush) / 100 || 0;
@@ -221,8 +213,6 @@
                 const impliedProb = MathHelper.getImpliedProb(numOdds, format);
                 const profitPerUnit = MathHelper.getProfitPerUnit(numOdds, format);
                 
-                // EV Formula: (pWin * profit) - (pLose * 1) + (pPush * 0)
-                // pLose = 1 - pWin - pPush
                 const pLose = Math.max(0, 1 - numProbWin - numProbPush);
                 const evPerUnit = (numProbWin * profitPerUnit) - (pLose * 1);
                 
@@ -230,13 +220,12 @@
                 const evAmount = numStake * evPerUnit;
                 const risk = MathHelper.getRiskLevel(edge);
 
-                // Save on unmount or debounce? Let's save on "Back"
                 const handleSave = () => {
                     if (!isNaN(numOdds) && !isNaN(numProbWin)) {
                         const result = {
                             market, oddsFormat: format, odds: numOdds, line: line || null,
                             probWin: numProbWin, probPush: numProbPush, stake: numStake || null,
-                            impliedProb, breakEven: impliedProb, // Simplified
+                            impliedProb, breakEven: impliedProb, 
                             edge, profitPerUnit, evPerUnit, evAmount: numStake ? evAmount : null,
                             riskLevel: risk.label, createdAt: Date.now()
                         };
@@ -247,7 +236,6 @@
 
                 return (
                     <div className="absolute inset-0 bg-slate-950 z-50 flex flex-col animate-in">
-                        {/* Header */}
                         <div className="h-14 bg-slate-900 border-b border-slate-800 flex items-center justify-between px-4 shrink-0">
                             <button onClick={handleSave} className="text-slate-400 flex items-center gap-1">
                                 <Icon d="M15 19l-7-7 7-7" className="w-5 h-5" /> 返回
@@ -256,14 +244,11 @@
                             <div className="w-10"></div>
                         </div>
 
-                        {/* Content */}
                         <div className="flex-1 overflow-y-auto p-4 pb-10">
-                            {/* Disclaimer */}
                             <p className="text-[10px] text-slate-500 text-center mb-4 leading-relaxed">
                                 本工具僅提供數學換算與概率模擬，不提供投注建議。<br/>Inputs provided by user at own responsibility.
                             </p>
 
-                            {/* Event Info */}
                             <div className="text-center mb-6">
                                 <h2 className="text-xl font-bold text-white mb-1">
                                     {getTeamName(event.teamAId)} <span className="text-slate-500 text-sm">vs</span> {event.teamBId ? getTeamName(event.teamBId) : "項目"}
@@ -271,7 +256,6 @@
                                 <span className="text-xs bg-slate-800 px-2 py-1 rounded text-slate-400">{getLeagueName(event.leagueId)}</span>
                             </div>
 
-                            {/* Market Selector */}
                             <div className="grid grid-cols-3 gap-1 bg-slate-900 p-1 rounded-lg mb-4">
                                 {['moneyline','spread','total'].map(m => (
                                     <button key={m} onClick={() => setMarket(m)} 
@@ -281,7 +265,6 @@
                                 ))}
                             </div>
 
-                            {/* Format Selector */}
                             <div className="flex justify-center gap-4 mb-4 text-xs font-bold text-slate-400">
                                 <label className="flex items-center gap-2">
                                     <input type="radio" checked={format === 'american'} onChange={() => setFormat('american')} /> 美式
@@ -291,7 +274,6 @@
                                 </label>
                             </div>
 
-                            {/* Inputs Grid */}
                             <div className="grid grid-cols-2 gap-4 mb-6">
                                 <div className="col-span-1">
                                     <label className="text-xs text-sky-400 font-bold block mb-1">賠率 Odds</label>
@@ -326,7 +308,6 @@
                                 </div>
                             </div>
 
-                            {/* Output Card */}
                             <div className="bg-slate-900 rounded-xl p-4 border border-slate-800 relative overflow-hidden">
                                 <div className="grid grid-cols-2 gap-y-4 gap-x-2">
                                     <div>
@@ -364,7 +345,6 @@
                                 </div>
                             </div>
                             
-                            {/* Cheat Sheet */}
                             <details className="mt-6 text-slate-500 text-xs">
                                 <summary className="cursor-pointer font-bold mb-2">術語小抄 (Terms)</summary>
                                 <ul className="space-y-1 pl-4 list-disc marker:text-slate-700">
@@ -391,7 +371,6 @@
 
                 const saveNewEvent = () => {
                     if (!newTeamA || !newLeague) return;
-                    // Find or create League ID (Simplified: using timestamp as ID for new entries)
                     let leagueId = leagues.find(l => l.nameZh === newLeague)?.id;
                     if (!leagueId) {
                         leagueId = Date.now();
@@ -399,11 +378,10 @@
                         setLeagues([...leagues, newL]);
                     }
 
-                    // Find or create Team IDs
                     const createTeam = (name, lId) => {
                         const t = teams.find(t => t.nameZh === name && t.leagueId === lId);
                         if (t) return t.id;
-                        const newId = Math.floor(Math.random() * 10000000); // Random enough
+                        const newId = Math.floor(Math.random() * 10000000); 
                         const newT = { id: newId, leagueId: lId, nameZh: name, createdAt: Date.now() };
                         setTeams(prev => [...prev, newT]);
                         return newId;
@@ -414,7 +392,6 @@
 
                     handleAddEvent({ sport: newSport, leagueId, teamAId: tA, teamBId: tB });
                     setIsAdding(false);
-                    // Reset
                     setNewTeamA(""); setNewTeamB("");
                 };
 
@@ -455,7 +432,6 @@
 
                 return (
                     <div className="flex flex-col h-full relative">
-                        {/* Top Filters */}
                         <div className="flex overflow-x-auto gap-2 p-2 no-scrollbar border-b border-slate-800 shrink-0">
                             {sports.map(s => (
                                 <button key={s} onClick={() => setSportFilter(s)} 
@@ -465,7 +441,6 @@
                             ))}
                         </div>
 
-                        {/* List */}
                         <div className="flex-1 overflow-y-auto p-2 space-y-2">
                             {filteredEvents.length === 0 ? (
                                 <div className="text-center text-slate-600 mt-20 text-sm">
@@ -508,7 +483,6 @@
                             )}
                         </div>
 
-                        {/* FAB */}
                         <button onClick={() => setIsAdding(true)} className="absolute bottom-4 right-4 w-14 h-14 bg-sky-500 hover:bg-sky-400 rounded-full flex items-center justify-center text-white shadow-lg shadow-sky-900/50 z-10">
                             <Icon d="M12 4v16m8-8H4" className="w-6 h-6"/>
                         </button>
@@ -520,7 +494,6 @@
             const LibraryTab = () => {
                 const initTemplates = () => {
                     if (confirm("建立 NBA/MLB 範本資料？")) {
-                        // NBA
                         const nbaId = Date.now();
                         const nba = { id: nbaId, sport: "籃球", nameZh: "NBA", createdAt: Date.now() };
                         const nbaTeams = [
@@ -656,24 +629,19 @@
             // --- Main Render ---
             return (
                 <div className="flex flex-col h-full bg-slate-950 text-white font-sans selection:bg-sky-500/30">
-                    {/* Header */}
                     <div className="h-14 bg-slate-900/80 backdrop-blur border-b border-slate-800 flex items-center justify-center shrink-0 z-10">
                         <span className="font-black italic tracking-tighter text-lg">
                             SPORTS <span className="text-sky-500">LAB</span>
                         </span>
                     </div>
 
-                    {/* Main Content Area */}
                     <div className="flex-1 overflow-hidden relative">
                         {activeTab === 'events' && <EventsTab />}
                         {activeTab === 'library' && <LibraryTab />}
                         {activeTab === 'backup' && <BackupTab />}
-                        
-                        {/* Calculator Modal Overlay */}
                         {viewState === 'calculator' && <CalculatorView />}
                     </div>
 
-                    {/* Bottom Nav */}
                     <div className="h-20 bg-slate-900 border-t border-slate-800 grid grid-cols-3 p-2 pb-6 shrink-0 z-20">
                         {[
                             {id: 'events', label: '賽事', icon: "M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"},
