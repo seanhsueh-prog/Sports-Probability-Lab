@@ -1,7 +1,10 @@
-const CACHE_NAME = 'spl-cache-v1.0';
+const CACHE_NAME = 'spl-cache-v1.0.1'; // 升級版本號以強制更新
 const urlsToCache = [
   './',
-  './index.html', // 假設主檔名若改為 index.html 也能運作
+  './sports-probability-lab-v1.0.html', // 修正為正確的 HTML 檔名
+  './icon-192.png', // 加入圖片快取
+  './icon-512.png', // 加入圖片快取
+  './manifest.json',
   'https://cdn.tailwindcss.com',
   'https://unpkg.com/react@18/umd/react.development.js',
   'https://unpkg.com/react-dom@18/umd/react-dom.development.js',
