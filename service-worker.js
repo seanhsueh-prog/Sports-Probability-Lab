@@ -1,9 +1,9 @@
-const CACHE_NAME = 'spl-cache-v1.0.1'; // 升級版本號以強制更新
+const CACHE_NAME = 'spl-cache-v1.0.2'; // 升級版本號
 const urlsToCache = [
-  './',
-  './sports-probability-lab-v1.0.html', // 修正為正確的 HTML 檔名
-  './icon-192.png', // 加入圖片快取
-  './icon-512.png', // 加入圖片快取
+  // 移除 './'，因為非 index.html 的專案在抓取根目錄時會導致 404 錯誤，進而讓 SW 安裝失敗
+  './sports-probability-lab-v1.0.html', 
+  './icon-192.png',
+  './icon-512.png',
   './manifest.json',
   'https://cdn.tailwindcss.com',
   'https://unpkg.com/react@18/umd/react.development.js',
@@ -15,7 +15,7 @@ self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => {
-        // 嘗試快取核心資源，若失敗不阻擋安裝
+        // 這裡會依序抓取清單中的檔案，只要有一個失敗(404)，整個 SW 就會停止運作
         return cache.addAll(urlsToCache).catch(err => console.log('Cache addAll error:', err));
       })
   );
@@ -37,11 +37,10 @@ self.addEventListener('activate', (event) => {
   return self.clients.claim();
 });
 
-// 策略：HTML Network First (確保讀到新版), Assets Cache First
 self.addEventListener('fetch', (event) => {
   const requestUrl = new URL(event.request.url);
 
-  // 對於 HTML 頁面或根路徑，使用 Network First
+  // 針對主程式 HTML 採用 Network First (優先讀取網路新版)
   if (event.request.mode === 'navigate' || requestUrl.pathname.endsWith('.html')) {
     event.respondWith(
       fetch(event.request)
@@ -55,7 +54,7 @@ self.addEventListener('fetch', (event) => {
         .catch(() => caches.match(event.request))
     );
   } else {
-    // 其他靜態資源使用 Cache First
+    // 其他資源 (圖示、CDN) 採用 Cache First
     event.respondWith(
       caches.match(event.request)
         .then((response) => {
